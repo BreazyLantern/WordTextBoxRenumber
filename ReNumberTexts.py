@@ -1,68 +1,27 @@
-from pathlib import Path
-import os
-from datetime import datetime
-import time
-import win32com.client
+import File_Accessor as F_access
 
+fm = F_access.FileManip()
 
-current_dir = Path(__file__).parent.parent if "__file__" in locals() else Path.cwd()
+word_files = None
+try:
+    word_files = F_access.sys.argv[1:]
+    if len(word_files) != 0:
+        fm.add_to_list(word_files)
+    print()
+except Exception as e:
+    print(f"Something went wrong with retrieving the file: {e}")
 
-today_date = datetime.today().strftime("%d %b, %Y")
+try:
+    fm.output_paths()
 
-def get_doc(file, date):
-    #open up a invisible word doc
-    word_app = win32com.client.DispatchEx("Word.Application")
-    word_app.Visible = False
-    word_app.DisplayAlerts = False
+except Exception as e:
+    print(e)
 
-    #temp file name
-    result = file
+try:
+    fm.work_on_all_files()
+    #fm.testing()
+    #fm.edit_text_in_documents("25_07 Dec, 2024.docx")
+except Exception as e:
+    print(e)
 
-    word_app.Documents.Open(str(file))
-
-    # Loop through all the shapes
-    for i in range(word_app.ActiveDocument.Shapes.Count):
-        if word_app.ActiveDocument.Shapes(i + 1).TextFrame.HasText:
-            words = word_app.ActiveDocument.Shapes(i + 1).TextFrame.TextRange.Words
-            # add 6 to the texts
-            addsix = int(words.Item(1).Text) + 6
-            words.Item(1).Text = addsix
-
-    #    Save the new file
-    curr_time = time.strftime("%H_%M_%S", time.localtime())
-    formatedDateTime = f"_{date}_time_{curr_time}"
-    if file.stem.find("_") != -1:
-        index = file.stem.find("_")
-        #print(index)
-        replace = file.stem[index:]
-        #print(replace)
-
-        result = file.stem.replace(replace, formatedDateTime) + file.suffix
-    else:
-        result = file.stem + formatedDateTime + file.suffix
-    #print(result)
-    output_path = current_dir / f"{result}"
-    word_app.ActiveDocument.SaveAs(str(output_path))
-    word_app.ActiveDocument.Close(SaveChanges=False)
-    word_app.Application.Quit()
-    print("Execution Completed")
-
-
-def exec():
-    doc = str(input("Please type in the name of the document: "))
-
-    file_path = os.path.abspath(current_dir / doc)
-    if os.path.exists(file_path):
-        path = current_dir / doc
-        print(str(path))
-        #for doc_file in Path(current_dir).rglob(doc):
-            # Open each document and replace string
-        get_doc(path, today_date)
-    else:
-        print(f"{current_dir / doc} did not exist")
-
-done = True
-while(done):
-    exec()
-    if input("type 'no' to stop program").lower() == "no":
-        done = False
+input("Type to quit")
